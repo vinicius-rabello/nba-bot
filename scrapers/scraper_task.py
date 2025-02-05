@@ -47,5 +47,4 @@ def scrape_nba_task():
     return df
 
 df = scrape_nba_task()
-print(df.head())
 df.to_excel('test.xlsx', index=False)
