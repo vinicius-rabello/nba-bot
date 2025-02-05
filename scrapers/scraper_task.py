@@ -1,7 +1,7 @@
 # Importa a classe NbaScraper para raspagem de dados
 from nba_scraper.nba_scraper import NbaScraper  
 # Importa a função para formatar datas
-from nba_scraper.utils import format_date  
+from nba_scraper.utils import format_date, generate_game_id
 import pandas as pd  # Para manipulação de dados
 from tqdm import tqdm  # Para exibição de progresso
 from zoneinfo import ZoneInfo # Para formatação das datas
@@ -35,11 +35,17 @@ def scrape_nba_task():
                 broadcaster = scraper.get_schedule_game_broadcaster(schedule_game)
                 away_team, home_team = scraper.get_schedule_game_teams(schedule_game)
                 arena, city, state = scraper.get_schedule_game_location(schedule_game)
+                # Cria um Id único para a partida, baseado na data e nome dos times
+                game_id = generate_game_id(full_date, home_team, away_team)
                 
                 # Adiciona os dados do jogo à lista
-                data.append([full_date, game_time, broadcaster, home_team, away_team, arena, city, state])
+                data.append([game_id, full_date, game_time, broadcaster, home_team, away_team, arena, city, state])
 
     # Converte os dados coletados para um DataFrame do pandas
-    df = pd.DataFrame(data, columns=['date', 'time', 'broadcaster', 'home_team', 'away_team', 'arena', 'city', 'state'])
+    df = pd.DataFrame(data, columns=['game_id', 'date', 'time', 'broadcaster', 'home_team', 'away_team', 'arena', 'city', 'state'])
 
     return df
+
+df = scrape_nba_task()
+print(df.head())
+df.to_excel('test.xlsx', index=False)
