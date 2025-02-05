@@ -14,7 +14,7 @@ class Database:
         """Insert or update NBA games in the database."""
         for _, row in df.iterrows():
             self.cursor.execute("""
-                INSERT INTO nba_games (game_id, date, time, broadcaster, home_team, away_team, arena, city, state)
+                INSERT INTO games (game_id, date, time, broadcaster, home_team, away_team, arena, city, state)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (game_id) DO UPDATE SET 
                     time = EXCLUDED.time,
