@@ -1,4 +1,5 @@
 from datetime import datetime
+import hashlib
 
 def month_name_to_num(month_name):
     """
@@ -53,3 +54,18 @@ def format_date(input_date, timezone=None):
 
     except (IndexError, ValueError) as e:
         raise ValueError(f"Erro ao processar data '{input_date}': {e}")
+
+def generate_game_id(date, home_team, away_team):
+    """
+    Gera um ID único para cada jogo baseado na data e nos times.
+
+    Parâmetros:
+        date (str): Data do jogo no formato 'YYYY-MM-DD'.
+        home_team (str): Nome do time da casa.
+        away_team (str): Nome do time visitante.
+
+    Retorno:
+        str: ID único gerado como hash SHA-1.
+    """
+    raw_id = f"{date}_{home_team}_{away_team}".lower().replace(" ", "_")
+    return hashlib.sha1(raw_id.encode()).hexdigest()[:10]  # Hash curto para evitar IDs longos
