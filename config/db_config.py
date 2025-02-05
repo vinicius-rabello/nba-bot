@@ -7,4 +7,4 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Database connection string (PostgreSQL)
-DB_URI = os.getenv("DATABASE_URL")
+DB_URI = os.getenv("DB_URI")
