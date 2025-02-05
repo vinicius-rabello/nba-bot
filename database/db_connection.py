@@ -10,7 +10,7 @@ class Database:
         self.conn = psycopg2.connect(DB_URI)
         self.cursor = self.conn.cursor()
 
-    def insert_or_update_games(self, df):
+    def insert_or_update_nba_games(self, df):
         """Insert or update NBA games in the database."""
         for _, row in df.iterrows():
             self.cursor.execute("""
