@@ -110,8 +110,14 @@ class NbaScraper(webdriver.Chrome):
             str: Nome da emissora ou 'NBA League Pass' caso não esteja especificado.
         """
         try:
-            return schedule_game.find_element(By.XPATH, ".//p[contains(@class, 'Broadcasters')]").text
+            broadcaster_div = schedule_game.find_element(By.XPATH, ".//div[contains(@class, 'Broadcasters')]")
         except NoSuchElementException:  # Captura apenas a exceção esperada
+            return None 
+        try:
+            broadcaster_p = broadcaster_div.find_element(By.XPATH, ".//p[contains(@class, 'Broadcaster')]")
+            broadcaster = broadcaster_p.text
+            return broadcaster
+        except NoSuchElementException:
             return "NBA League Pass"
 
     def get_schedule_game_teams(self, schedule_game):
