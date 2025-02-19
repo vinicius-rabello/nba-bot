@@ -50,7 +50,7 @@ x-airflow-common:
     PYTHONPATH: "/opt/airflow"
   volumes:
     - ./dags:/opt/airflow/dags
-    - ./scrapers:/opt/airflow/scrapers
+    - ./tasks:/opt/airflow/tasks
     - ./logs:/opt/airflow/logs
     - ./plugins:/opt/airflow/plugins
   user: "${AIRFLOW_UID:-50000}:${AIRFLOW_GID:-50000}"
