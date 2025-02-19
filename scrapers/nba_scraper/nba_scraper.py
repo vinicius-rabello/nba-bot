@@ -138,6 +138,10 @@ class NbaScraper(webdriver.Chrome):
             list: Lista contendo os placares das equipes (mandante e visitante).
         """
         scores = schedule_game.find_elements(By.XPATH, ".//div[contains(@class, 'ScheduleGame_sgScore')]")
+        # Se o jogo ainda não aconteceu, scores será uma lista vazia.
+        if len(scores) == 0:
+            return [None, None]
+        
         return [score.find_element(By.XPATH, ".//span").text for score in scores]
 
     def get_schedule_game_location(self, schedule_game):

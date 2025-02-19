@@ -84,8 +84,8 @@ def scrape_nba_task(date_str):
                                              'home_team_score', 'away_team_score', 'arena', 'city', 'state'])
             return df
 
-# df = scrape_nba_task('2025-01-02')
-# if df is not None:
-#     df.to_excel('test.xlsx', index=False)
-# else:
-#     print('No games found')
+df = scrape_nba_task('2025-03-02')
+if df is not None:
+    df.to_excel('test.xlsx', index=False)
+else:
+    print('No games found')
