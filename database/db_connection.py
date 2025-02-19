@@ -19,8 +19,6 @@ class Database:
                 INSERT INTO games (game_id, date, time, broadcaster, home_team, away_team, home_team_score, away_team_score, arena, city, state)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (game_id) DO UPDATE SET 
-                    time = EXCLUDED.time,
-                    broadcaster = EXCLUDED.broadcaster,
                     home_team_score = COALESCE(EXCLUDED.home_team_score, games.home_team_score),
                     away_team_score = COALESCE(EXCLUDED.away_team_score, games.away_team_score);
             """, (
