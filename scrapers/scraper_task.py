@@ -47,6 +47,7 @@ def scrape_nba_task(date_str):
                 game_time = scraper.get_schedule_game_time(schedule_game)
                 broadcaster = scraper.get_schedule_game_broadcaster(schedule_game)
                 away_team, home_team = scraper.get_schedule_game_teams(schedule_game)
+                away_team_score, home_team_score = scraper.get_schedule_game_scores(schedule_game)
                 arena, city, state = scraper.get_schedule_game_location(schedule_game)
 
                 # Cria um Id único para a partida, baseado na data e nome dos times
@@ -60,6 +61,8 @@ def scrape_nba_task(date_str):
                     "broadcaster": broadcaster,
                     "home_team": home_team,
                     "away_team": away_team,
+                    "home_team_score": home_team_score,
+                    "away_team_score": away_team_score,
                     "arena": arena,
                     "city": city,
                     "state": state
@@ -71,16 +74,18 @@ def scrape_nba_task(date_str):
                     # Adiciona os dados do jogo à lista se forem válidos
                     data.append([validated_game.game_id, validated_game.full_date, validated_game.game_time,
                                  validated_game.broadcaster, validated_game.home_team, validated_game.away_team,
-                                 validated_game.arena, validated_game.city, validated_game.state])
+                                 validated_game.home_team_score, validated_game.away_team_score, validated_game.arena,
+                                 validated_game.city, validated_game.state])
                 else:
                     print(f"Dados inválidos para o jogo: {game_data}")
             
             # Converte os dados coletados para um DataFrame do pandas
-            df = pd.DataFrame(data, columns=['game_id', 'date', 'time', 'broadcaster', 'home_team', 'away_team', 'arena', 'city', 'state'])
+            df = pd.DataFrame(data, columns=['game_id', 'date', 'time', 'broadcaster', 'home_team', 'away_team',
+                                             'home_team_score', 'away_team_score', 'arena', 'city', 'state'])
             return df
 
-df = scrape_nba_task('2025-01-02')
-if df is not None:
-    df.to_excel('test.xlsx', index=False)
-else:
-    print('No games found')
+# df = scrape_nba_task('2025-01-02')
+# if df is not None:
+#     df.to_excel('test.xlsx', index=False)
+# else:
+#     print('No games found')

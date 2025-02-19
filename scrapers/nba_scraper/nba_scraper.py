@@ -126,6 +126,19 @@ class NbaScraper(webdriver.Chrome):
         """
         teams = schedule_game.find_elements(By.XPATH, ".//div[contains(@class, 'ScheduleGame_sgTeam')]")
         return [team.find_element(By.XPATH, ".//a").text for team in teams]
+    
+    def get_schedule_game_scores(self, schedule_game):
+        """
+        Obtém o placar das partidas que já aconteceram.
+
+        Args:
+            schedule_game (WebElement): Elemento representando um jogo.
+
+        Returns:
+            list: Lista contendo os placares das equipes (mandante e visitante).
+        """
+        scores = schedule_game.find_elements(By.XPATH, ".//div[contains(@class, 'ScheduleGame_sgScore')]")
+        return [score.find_element(By.XPATH, ".//span").text for score in scores]
 
     def get_schedule_game_location(self, schedule_game):
         """

@@ -7,6 +7,8 @@ class Game(BaseModel):
     broadcaster: str  # Broadcaster name as a string
     home_team: str  # Home team name as a string
     away_team: str  # Away team name as a string
+    home_team_score: int  # Home team score as an int
+    away_team_score: int  # Away team score as an int
     arena: str  # Arena name as a string
     city: str  # City name as a string
     state: str  # State name as a string
