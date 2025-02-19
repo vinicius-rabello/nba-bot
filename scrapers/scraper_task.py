@@ -1,7 +1,7 @@
 # Importa a classe NbaScraper para raspagem de dados
 from nba_scraper.nba_scraper import NbaScraper  
 # Importa a função para formatar datas
-from nba_scraper.utils import format_date, generate_game_id
+from nba_scraper.utils import format_date, generate_game_id, get_month_from_date_string, month_num_to_name
 # Import a função que valida os dados
 from validation.validate_game import validate_game
 import pandas as pd  # Para manipulação de dados
@@ -10,7 +10,13 @@ from zoneinfo import ZoneInfo # Para formatação das datas
 
 import nba_scraper.constants as const  # Importa as constantes definidas no módulo nba_scraper
 
-def scrape_nba_task():
+def scrape_nba_task(date_str):
+    # Pega o mês da data requisitada
+    month_num = get_month_from_date_string(date_str)
+    month_name = month_num_to_name(month_num)
+    url = const.BASE_URL
+    url = url.replace("MONTH", month_name)
+
     # Define a zona de fuso horário para a formatação das datas
     tz = ZoneInfo(const.TIMEZONE)
 
@@ -19,21 +25,24 @@ def scrape_nba_task():
 
     # Inicia o Web Scraper dentro de um gerenciador de contexto para garantir que o WebDriver seja fechado corretamente
     with NbaScraper() as scraper:
-        scraper.land_first_page()  # Acessa a página principal da NBA
-        
+        scraper.land_first_page(url=url)  # Acessa a página principal da NBA
         # Obtém a lista de dias disponíveis na programação
         schedule_days = scraper.get_schedule_days()
         
         # no caso de existirem menos de 7 elementos de dia na página, pegue a quantidade restante
-        n_days = min(7, len(schedule_days))
         # Itera sobre os dias da programação (atualmente pegando apenas a primeiro semana [:n_days])
-        for schedule_day in tqdm(schedule_days[:n_days], desc="Processando dias"):
+        for schedule_day in tqdm(schedule_days, desc=f"Procurando o dia: {date_str}"):
+            full_date = format_date(scraper.get_schedule_day_date(schedule_day), timezone=tz)  # Obtém e formata a data do dia
+            # Se a data do jogo não for a pedida pela task, pule
+            if full_date != date_str:
+                continue
+
+            print(f"Jogos do dia: {date_str} encontrados")
             schedule_day_games = scraper.get_schedule_day_games(schedule_day)  # Obtém os jogos do dia
             schedule_games = scraper.get_schedule_games(schedule_day_games)  # Obtém a lista de jogos
-            full_date = format_date(scraper.get_schedule_day_date(schedule_day), timezone=tz)  # Obtém e formata a data do dia
             
             # Itera sobre os jogos do dia
-            for schedule_game in tqdm(schedule_games, desc="Processando jogos", leave=False):
+            for schedule_game in tqdm(schedule_games, desc=f"Processando jogos do dia: {date_str}", leave=False):
                 # Coleta as informações do jogo
                 game_time = scraper.get_schedule_game_time(schedule_game)
                 broadcaster = scraper.get_schedule_game_broadcaster(schedule_game)
@@ -65,11 +74,13 @@ def scrape_nba_task():
                                  validated_game.arena, validated_game.city, validated_game.state])
                 else:
                     print(f"Dados inválidos para o jogo: {game_data}")
+            
+            # Converte os dados coletados para um DataFrame do pandas
+            df = pd.DataFrame(data, columns=['game_id', 'date', 'time', 'broadcaster', 'home_team', 'away_team', 'arena', 'city', 'state'])
+            return df
 
-    # Converte os dados coletados para um DataFrame do pandas
-    df = pd.DataFrame(data, columns=['game_id', 'date', 'time', 'broadcaster', 'home_team', 'away_team', 'arena', 'city', 'state'])
-
-    return df
-
-df = scrape_nba_task()
-df.to_excel('test.xlsx', index=False)
+df = scrape_nba_task('2025-01-02')
+if df is not None:
+    df.to_excel('test.xlsx', index=False)
+else:
+    print('No games found')

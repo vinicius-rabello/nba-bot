@@ -37,9 +37,9 @@ class NbaScraper(webdriver.Chrome):
         print("Closing the NbaScraper...")
         self.quit()
 
-    def land_first_page(self):
+    def land_first_page(self, url=const.BASE_URL):
         """Acessa a página inicial da NBA definida em `const.BASE_URL`."""
-        self.get(const.BASE_URL)
+        self.get(url)
 
     def get_schedule_days(self):
         """
