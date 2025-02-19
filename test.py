@@ -1,4 +1,4 @@
-from database import insert_task
+from tasks import insert_task
 import pandas as pd
 
 df = pd.read_excel('test.xlsx')

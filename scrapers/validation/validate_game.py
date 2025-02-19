@@ -1,6 +1,6 @@
 from pydantic import ValidationError
 from typing import Optional
-from models.game import Game
+from scrapers.models.game import Game
 
 # Validate game function
 def validate_game(game_data: dict) -> Optional[Game]:

@@ -1,9 +1,16 @@
+import sys
+from pathlib import Path
+
+# Add the root directory to sys.path
+root_dir = Path(__file__).resolve().parent.parent  # Go up two levels to the root directory
+sys.path.append(str(root_dir))
+
 # Importa a classe NbaScraper para raspagem de dados
 from scrapers.nba_scraper.nba_scraper import NbaScraper  
 # Importa a função para formatar datas
 from scrapers.nba_scraper.utils import format_date, generate_game_id, get_month_from_date_string, month_num_to_name
 # Import a função que valida os dados
-from validation.validate_game import validate_game
+from scrapers.validation.validate_game import validate_game
 import pandas as pd  # Para manipulação de dados
 from tqdm import tqdm  # Para exibição de progresso
 from zoneinfo import ZoneInfo # Para formatação das datas
@@ -83,3 +90,6 @@ def scrape_nba_task(date_str):
             df = pd.DataFrame(data, columns=['game_id', 'date', 'time', 'broadcaster', 'home_team', 'away_team',
                                              'home_team_score', 'away_team_score', 'arena', 'city', 'state'])
             return df
+        
+df = scrape_nba_task('2024-11-12')
+df.to_excel('./test.xlsx', index=False)

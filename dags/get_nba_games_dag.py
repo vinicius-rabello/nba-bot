@@ -1,9 +1,9 @@
 import datetime
 
 import sys
-sys.path.append("/opt/airflow/scrapers")
+sys.path.append("/opt/airflow/tasks")
 
-from scrapers.scraper_task import scrape_nba_task
+from tasks.scraper_task import scrape_nba_task
 
 
 from airflow import DAG
