@@ -1,14 +1,14 @@
 # Importa a classe NbaScraper para raspagem de dados
-from nba_scraper.nba_scraper import NbaScraper  
+from scrapers.nba_scraper.nba_scraper import NbaScraper  
 # Importa a função para formatar datas
-from nba_scraper.utils import format_date, generate_game_id, get_month_from_date_string, month_num_to_name
+from scrapers.nba_scraper.utils import format_date, generate_game_id, get_month_from_date_string, month_num_to_name
 # Import a função que valida os dados
 from validation.validate_game import validate_game
 import pandas as pd  # Para manipulação de dados
 from tqdm import tqdm  # Para exibição de progresso
 from zoneinfo import ZoneInfo # Para formatação das datas
 
-import nba_scraper.constants as const  # Importa as constantes definidas no módulo nba_scraper
+import scrapers.nba_scraper.constants as const  # Importa as constantes definidas no módulo nba_scraper
 
 def scrape_nba_task(date_str):
     # Pega o mês da data requisitada
@@ -83,9 +83,3 @@ def scrape_nba_task(date_str):
             df = pd.DataFrame(data, columns=['game_id', 'date', 'time', 'broadcaster', 'home_team', 'away_team',
                                              'home_team_score', 'away_team_score', 'arena', 'city', 'state'])
             return df
-
-df = scrape_nba_task('2025-02-03')
-if df is not None:
-    df.to_excel('test.xlsx', index=False)
-else:
-    print('No games found')

@@ -1,4 +1,4 @@
-import nba_scraper.constants as const  # Importa as constantes definidas no módulo nba_scraper
+import scrapers.nba_scraper.constants as const  # Importa as constantes definidas no módulo nba_scraper
 from selenium import webdriver  # Importa o WebDriver do Selenium para controle do navegador
 from selenium.webdriver.common.by import By  # Importa o localizador de elementos
 from selenium.common.exceptions import NoSuchElementException  # Para tratamento de exceções
