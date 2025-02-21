@@ -2,30 +2,30 @@ import scrapers.nba_scraper.constants as const  # Importa as constantes definida
 from selenium import webdriver  # Importa o WebDriver do Selenium para controle do navegador
 from selenium.webdriver.common.by import By  # Importa o localizador de elementos
 from selenium.common.exceptions import NoSuchElementException  # Para tratamento de exceções
-import os  # Para manipulação de diretórios e variáveis de ambiente
+from selenium.webdriver.chrome.options import Options
 
-
-class NbaScraper(webdriver.Chrome):
+class NbaScraper(webdriver.Remote):
     """
     Classe para raspar informações sobre jogos da NBA usando Selenium.
     Herda da classe webdriver.Chrome para controlar o navegador Chrome.
     """
 
-    def __init__(self, driver_path=r"C:\SeleniumDrivers"):
+    def __init__(self, remote_url="http://remote_chromedriver:4444/wd/hub"):
         """
         Inicializa a classe, configurando o caminho do driver do Chrome e iniciando o navegador.
 
         Args:
             driver_path (str): Caminho para o diretório onde está o driver do Chrome.
         """
-        self.driver_path = driver_path
-        
-        # Evita duplicações ao adicionar o caminho do driver
-        if self.driver_path not in os.environ["PATH"]:
-            os.environ["PATH"] += os.pathsep + self.driver_path
+        # Configura as opções do Chrome para ambiente Docker
+        chrome_options = Options()
+        chrome_options.add_argument('--no-sandbox')
+        chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--disable-dev-shm-usage')
+        chrome_options.add_argument('--disable-gpu')
         
         # Inicializa o WebDriver
-        super(NbaScraper, self).__init__()
+        super(NbaScraper, self).__init__(command_executor=remote_url, options=chrome_options)
         
         self.implicitly_wait(5)  # Define um tempo de espera implícito de 5 segundos
         self.minimize_window()  # Minimiza a janela do navegador para melhor desempenho

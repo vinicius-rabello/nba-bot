@@ -4,6 +4,7 @@ from pathlib import Path
 # Add the root directory to sys.path
 root_dir = Path(__file__).resolve().parent.parent  # Go up two levels to the root directory
 sys.path.append(str(root_dir))
+sys.path.append("/opt/airflow/scrapers")
 
 # Importa a classe NbaScraper para raspagem de dados
 from scrapers.nba_scraper.nba_scraper import NbaScraper  
@@ -89,7 +90,6 @@ def scrape_nba_task(date_str):
             # Converte os dados coletados para um DataFrame do pandas
             df = pd.DataFrame(data, columns=['game_id', 'date', 'time', 'broadcaster', 'home_team', 'away_team',
                                              'home_team_score', 'away_team_score', 'arena', 'city', 'state'])
+            
+            print(df.shape)
             return df
-        
-df = scrape_nba_task('2024-11-12')
-df.to_excel('./test.xlsx', index=False)
