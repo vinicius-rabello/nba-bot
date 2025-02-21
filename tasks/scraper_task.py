@@ -1,95 +1,126 @@
-import sys
-from pathlib import Path
-
-# Add the root directory to sys.path
-root_dir = Path(__file__).resolve().parent.parent  # Go up two levels to the root directory
-sys.path.append(str(root_dir))
-sys.path.append("/opt/airflow/scrapers")
-
-# Importa a classe NbaScraper para raspagem de dados
-from scrapers.nba_scraper.nba_scraper import NbaScraper  
-# Importa a função para formatar datas
-from scrapers.nba_scraper.utils import format_date, generate_game_id, get_month_from_date_string, month_num_to_name
-# Import a função que valida os dados
-from scrapers.validation.validate_game import validate_game
-import pandas as pd  # Para manipulação de dados
-from tqdm import tqdm  # Para exibição de progresso
-from zoneinfo import ZoneInfo # Para formatação das datas
-
-import scrapers.nba_scraper.constants as const  # Importa as constantes definidas no módulo nba_scraper
-
 def scrape_nba_task(date_str):
-    # Pega o mês da data requisitada
+    import sys
+    from pathlib import Path
+
+    root_dir = Path(__file__).resolve().parent.parent
+    sys.path.append(str(root_dir))
+    sys.path.append("/opt/airflow/scrapers")
+
+    from scrapers.nba_scraper.nba_scraper import NbaScraper
+    from scrapers.nba_scraper.utils import format_date, generate_game_id, get_month_from_date_string, month_num_to_name
+    from scrapers.validation.validate_game import validate_game
+    import pandas as pd
+    from tqdm import tqdm
+    from zoneinfo import ZoneInfo
+    import time
+
+    import scrapers.nba_scraper.constants as const
+    
     month_num = get_month_from_date_string(date_str)
     month_name = month_num_to_name(month_num)
-    url = const.BASE_URL
-    url = url.replace("MONTH", month_name)
-
-    # Define a zona de fuso horário para a formatação das datas
+    url = const.BASE_URL.replace("MONTH", month_name)
+    
+    print(f"URL being accessed: {url}")  # Debug log
+    
     tz = ZoneInfo(const.TIMEZONE)
-
-    # Lista para armazenar os dados raspados
     data = []
+    games_found = False
 
-    # Inicia o Web Scraper dentro de um gerenciador de contexto para garantir que o WebDriver seja fechado corretamente
-    with NbaScraper() as scraper:
-        scraper.land_first_page(url=url)  # Acessa a página principal da NBA
-        # Obtém a lista de dias disponíveis na programação
-        schedule_days = scraper.get_schedule_days()
+    try:
+        with NbaScraper() as scraper:
+            print("Iniciando o scraper...")  # Debug log
+            scraper.land_first_page(url=url)
+            print("Página inicial acessada com sucesso")  # Debug log
+            
+            # Adicionando espera de 5 segundos antes de pegar os dias
+            print("Aguardando 5 segundos para carregar o conteúdo...")
+            time.sleep(5)
+            schedule_days = scraper.get_schedule_days()
+            print(schedule_days)
+            print(f"Dias encontrados na programação: {len(schedule_days)}")  # Debug log
+            
+            if not schedule_days:
+                print("Nenhum dia encontrado na programação!")
+                return pd.DataFrame()
+
+            for schedule_day in tqdm(schedule_days, desc=f"Procurando o dia: {date_str}"):
+                try:
+                    print("Processando dia da programação...")  # Debug log
+                    full_date = format_date(scraper.get_schedule_day_date(schedule_day), timezone=tz)
+                    print("Data formatada: {full_date}")  # Debug log
+                    
+                    if full_date != date_str:
+                        print(f"Data não corresponde: {full_date} != {date_str}")  # Debug log
+                        continue
+
+                    games_found = True
+                    print(f"Jogos do dia: {date_str} encontrados")
+                    schedule_day_games = scraper.get_schedule_day_games(schedule_day)
+                    schedule_games = scraper.get_schedule_games(schedule_day_games)
+                    
+                    print(f"Número de jogos encontrados: {len(schedule_games)}")  # Debug log
+
+                    for schedule_game in tqdm(schedule_games, desc=f"Processando jogos do dia: {date_str}", leave=False):
+                        try:
+                            print("Processando jogo individual...")  # Debug log
+                            game_time = scraper.get_schedule_game_time(schedule_game)
+                            broadcaster = scraper.get_schedule_game_broadcaster(schedule_game)
+                            away_team, home_team = scraper.get_schedule_game_teams(schedule_game)
+                            away_team_score, home_team_score = scraper.get_schedule_game_scores(schedule_game)
+                            arena, city, state = scraper.get_schedule_game_location(schedule_game)
+
+                            print(f"Dados coletados para: {away_team} @ {home_team}")  # Debug log
+
+                            game_id = generate_game_id(full_date, home_team, away_team)
+                            game_data = {
+                                "game_id": game_id,
+                                "full_date": full_date,
+                                "game_time": game_time,
+                                "broadcaster": broadcaster,
+                                "home_team": home_team,
+                                "away_team": away_team,
+                                "home_team_score": home_team_score,
+                                "away_team_score": away_team_score,
+                                "arena": arena,
+                                "city": city,
+                                "state": state
+                            }
+
+                            validated_game = validate_game(game_data)
+                            if validated_game:
+                                data.append([
+                                    validated_game.game_id, validated_game.full_date,
+                                    validated_game.game_time, validated_game.broadcaster,
+                                    validated_game.home_team, validated_game.away_team,
+                                    validated_game.home_team_score, validated_game.away_team_score,
+                                    validated_game.arena, validated_game.city, validated_game.state
+                                ])
+                                print(f"Jogo adicionado com sucesso: {game_id}")  # Debug log
+                            else:
+                                print(f"Dados inválidos para o jogo: {game_data}")
+                        except Exception as e:
+                            print(f"Erro ao processar jogo individual: {str(e)}")
+                            continue
+                except Exception as e:
+                    print(f"Erro ao processar dia: {str(e)}")
+                    continue
+
+        if not games_found:
+            print(f"Nenhum jogo encontrado para a data: {date_str}")
+            return pd.DataFrame()
+
+        if not data:
+            print(f"Nenhum dado válido encontrado para a data: {date_str}")
+            return pd.DataFrame()
+
+        df = pd.DataFrame(data, columns=[
+            'game_id', 'date', 'time', 'broadcaster', 'home_team', 'away_team',
+            'home_team_score', 'away_team_score', 'arena', 'city', 'state'
+        ])
         
-        # no caso de existirem menos de 7 elementos de dia na página, pegue a quantidade restante
-        # Itera sobre os dias da programação (atualmente pegando apenas a primeiro semana [:n_days])
-        for schedule_day in tqdm(schedule_days, desc=f"Procurando o dia: {date_str}"):
-            full_date = format_date(scraper.get_schedule_day_date(schedule_day), timezone=tz)  # Obtém e formata a data do dia
-            # Se a data do jogo não for a pedida pela task, pule
-            if full_date != date_str:
-                continue
+        print(f"DataFrame final shape: {df.shape}")
+        return df
 
-            print(f"Jogos do dia: {date_str} encontrados")
-            schedule_day_games = scraper.get_schedule_day_games(schedule_day)  # Obtém os jogos do dia
-            schedule_games = scraper.get_schedule_games(schedule_day_games)  # Obtém a lista de jogos
-            
-            # Itera sobre os jogos do dia
-            for schedule_game in tqdm(schedule_games, desc=f"Processando jogos do dia: {date_str}", leave=False):
-                # Coleta as informações do jogo
-                game_time = scraper.get_schedule_game_time(schedule_game)
-                broadcaster = scraper.get_schedule_game_broadcaster(schedule_game)
-                away_team, home_team = scraper.get_schedule_game_teams(schedule_game)
-                away_team_score, home_team_score = scraper.get_schedule_game_scores(schedule_game)
-                arena, city, state = scraper.get_schedule_game_location(schedule_game)
-
-                # Cria um Id único para a partida, baseado na data e nome dos times
-                game_id = generate_game_id(full_date, home_team, away_team)
-
-                # Cria um dicionário com os dados do jogo
-                game_data = {
-                    "game_id": game_id,
-                    "full_date": full_date,
-                    "game_time": game_time,
-                    "broadcaster": broadcaster,
-                    "home_team": home_team,
-                    "away_team": away_team,
-                    "home_team_score": home_team_score,
-                    "away_team_score": away_team_score,
-                    "arena": arena,
-                    "city": city,
-                    "state": state
-                }
-
-                # Valida os dados do jogo com o modelo Game do pydantic
-                validated_game = validate_game(game_data)
-                if validated_game:
-                    # Adiciona os dados do jogo à lista se forem válidos
-                    data.append([validated_game.game_id, validated_game.full_date, validated_game.game_time,
-                                 validated_game.broadcaster, validated_game.home_team, validated_game.away_team,
-                                 validated_game.home_team_score, validated_game.away_team_score, validated_game.arena,
-                                 validated_game.city, validated_game.state])
-                else:
-                    print(f"Dados inválidos para o jogo: {game_data}")
-            
-            # Converte os dados coletados para um DataFrame do pandas
-            df = pd.DataFrame(data, columns=['game_id', 'date', 'time', 'broadcaster', 'home_team', 'away_team',
-                                             'home_team_score', 'away_team_score', 'arena', 'city', 'state'])
-            
-            print(df.shape)
-            return df
+    except Exception as e:
+        print(f"Erro durante a execução do scraper: {str(e)}")
+        raise
