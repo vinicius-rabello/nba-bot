@@ -38,7 +38,7 @@
 ---
 x-airflow-common:
   &airflow-common
-  image: apache/airflow:2.7.1
+  build: .
   environment:
     &airflow-common-env
     AIRFLOW__CORE__EXECUTOR: LocalExecutor
@@ -51,14 +51,21 @@ x-airflow-common:
   volumes:
     - ./dags:/opt/airflow/dags
     - ./tasks:/opt/airflow/tasks
+    - ./scrapers:/opt/airflow/scrapers
     - ./logs:/opt/airflow/logs
     - ./plugins:/opt/airflow/plugins
-  user: "${AIRFLOW_UID:-50000}:${AIRFLOW_GID:-50000}"
+  user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     postgres:
       condition: service_healthy
 
 services:
+  selenium:
+    container_name: remote_chromedriver
+    image: seleniarm/standalone-chromium:latest
+    ports:
+      - "4444:4444"
+    restart: always
   postgres:
     image: postgres:13
     environment:
@@ -94,7 +101,7 @@ services:
 
   airflow-init:
     <<: *airflow-common
-    command: bash -c "pip install -r /requirements.txt && airflow db upgrade"
+    command: airflow db upgrade
     environment:
       <<: *airflow-common-env
       _AIRFLOW_DB_UPGRADE: 'true'
