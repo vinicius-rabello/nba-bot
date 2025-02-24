@@ -47,7 +47,7 @@ def scrape_nba_task(date_str):
                 try:
                     print("Processando dia da programação...")  # Debug log
                     full_date = format_date(scraper.get_schedule_day_date(schedule_day), timezone=tz)
-                    print("Data formatada: {full_date}")  # Debug log
+                    print(f"Data formatada: {full_date}")  # Debug log
                     
                     if full_date != date_str:
                         print(f"Data não corresponde: {full_date} != {date_str}")  # Debug log
