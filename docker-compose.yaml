@@ -52,8 +52,11 @@ x-airflow-common:
     - ./dags:/opt/airflow/dags
     - ./tasks:/opt/airflow/tasks
     - ./scrapers:/opt/airflow/scrapers
+    - ./database:/opt/airflow/database
+    - ./config:/opt/airflow/config
     - ./logs:/opt/airflow/logs
     - ./plugins:/opt/airflow/plugins
+    - ./.env:/opt/airflow/.env
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     postgres:
