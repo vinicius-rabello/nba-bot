@@ -10,6 +10,9 @@ from tasks.insert_task import insert_nba_games
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 
+today = datetime.datetime.now()
+end_date = today + datetime.timedelta(7)
+
 default_args = {
     "owner": "viniciusrabello",
     "retries": 5,
@@ -18,10 +21,11 @@ default_args = {
 
 with DAG (
     default_args=default_args,
-    dag_id="nba_games_dag_v01",
-    description="This DAG scrapes the NBA games happening at execution date.",
-    start_date=datetime.datetime(2025, 2, 24),
-    schedule_interval="@daily"
+    dag_id="get_next_nba_games_dag_v01",
+    description="This DAG scrapes the NBA games happening in the next 7 days.",
+    start_date=today,
+    end_date=end_date,
+    schedule_interval="0 7 * * *"
 ) as dag:
     task1 = PythonOperator(
         task_id = "scraping_task",
