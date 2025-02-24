@@ -1,4 +1,12 @@
 import psycopg2
+import sys
+from pathlib import Path
+
+# Add the root directory to sys.path
+root_dir = Path(__file__).resolve().parent.parent
+sys.path.append(str(root_dir))
+sys.path.append("/opt/airflow/config")
+
 from config.db_config import DB_URI
 import pandas as pd
 
